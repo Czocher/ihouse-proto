@@ -3,12 +3,13 @@ import asyncio
 import websockets
 import json
 import serial
-
+from concurrent.futures import ThreadPoolExecutor
 
 class Server:
 
-    def __init__(self, device, baudrate):
+    def __init__(self, device, baudrate, loop):
         self._connection = serial.Serial(device, baudrate)
+        self._loop = loop
         self._lock = asyncio.Lock()
         self._event = asyncio.Event()
         self._event.set()
@@ -16,6 +17,10 @@ class Server:
             'insolation': 0,
             'temperature': 0,
         }
+
+    @staticmethod
+    def get_serial_data(connection):
+        return connection.readline()
 
     def __call__(self, websocket, path):
         while True:
@@ -25,7 +30,8 @@ class Server:
 
             if self._connection.inWaiting() >= 5 and not self._lock.locked():
                 with (yield from self._lock):
-                    serial_data = self._connection.readline()
+                    with ThreadPoolExecutor(max_workers=1) as executor:
+                        serial_data = yield from self._loop.run_in_executor(executor, self.get_serial_data, self._connection)
                     if len(serial_data) >= 5:
                         serial_data = serial_data.rstrip().decode('utf-8').split(';')
                         print("Recived {}".format(serial_data))
@@ -45,7 +51,7 @@ class Server:
 
 
 if __name__ == '__main__':
-    server = asyncio.coroutine(Server('/dev/ttyACM0', 9600))
+    server = asyncio.coroutine(Server('/dev/ttyACM0', 9600, asyncio.get_event_loop()))
 
     start_server = websockets.serve(server, 'localhost', 8889)
 
