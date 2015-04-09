@@ -28,7 +28,7 @@ class Server:
             if not websocket.open:
                 break
 
-            if self._connection.inWaiting() >= 5 and not self._lock.locked():
+            if not self._lock.locked() and self._connection.inWaiting() >= 5:
                 with (yield from self._lock):
                     with ThreadPoolExecutor(max_workers=1) as executor:
                         serial_data = yield from self._loop.run_in_executor(executor, self.get_serial_data, self._connection)
