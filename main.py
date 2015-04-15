@@ -71,7 +71,7 @@ if __name__ == '__main__':
     serial_reader = SerialReader('/dev/ttyACM0', 9600, asyncio.get_event_loop())
     server = asyncio.coroutine(Server(serial_reader))
     serial_reader = asyncio.coroutine(serial_reader)
-    start_server = websockets.serve(server, 'localhost', 8889)
+    start_server = websockets.serve(server, '0.0.0.0', 8889)
 
     asyncio.get_event_loop().run_until_complete(start_server)
     asyncio.get_event_loop().run_until_complete(serial_reader())

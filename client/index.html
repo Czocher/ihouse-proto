@@ -51,7 +51,7 @@
       $(document).on("pagecreate", "#page", function( event ) {
         $("#flip-checkbox-1").val('on').slider('refresh');
         if ("WebSocket" in window) {
-          var ws = new WebSocket("ws://localhost:8889/");
+          var ws = new WebSocket("ws://" + location.hostname + ":8889/");
           ws.onopen = function() {
             $("#connection").text("Połączony");
           };
